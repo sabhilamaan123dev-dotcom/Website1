@@ -20,7 +20,7 @@ st.title("🏃‍♂️ Parkour Obby Simulator")
 st.markdown(f"Level **{st.session_state.level}** / {TOTAL_LEVELS} &nbsp;&nbsp;|&nbsp;&nbsp; Jump **{st.session_state.jump}** / {JUMPS_PER_LEVEL}")
 
 # Display placeholder image
-st.image("https://i.imgur.com/7nYQZ0D.png", width=300)
+st.image("https://cdn.pixabay.com/photo/2020/04/28/17/40/parkour-5105130_1280.jpg", width=300)
 
 # Main game logic
 if not st.session_state.won:
