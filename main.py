@@ -1,64 +1,172 @@
-# streamlit_app.py
 import streamlit as st
-import random
+import streamlit.components.v1 as components
 
-# CONFIG
-TOTAL_LEVELS = 5
-JUMPS_PER_LEVEL = 25
-SUCCESS_RATE = 0.85  # 85% success rate per jump
+st.set_page_config(page_title="Parkour Obby Game", layout="wide")
+st.title("🏃 Parkour Obby Game (Playable in Browser)")
 
-# Initialize session state
-if "level" not in st.session_state:
-    st.session_state.level = 1
-    st.session_state.jump = 1
-    st.session_state.deaths = 0
-    st.session_state.won = False
+# Embed JS/HTML game
+components.html("""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Parkour Obby</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      background: #e0f7fa;
+    }
+  </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+<script>
+let player;
+let platforms = [];
+let gravity = 0.6;
+let jumpStrength = -12;
+let level = 1;
+let jumps = 0;
+let goalReached = false;
 
-# Page setup
-st.set_page_config(page_title="Parkour Obby", layout="centered")
-st.title("🏃‍♂️ Parkour Obby Simulator")
-st.markdown(f"Level **{st.session_state.level}** / {TOTAL_LEVELS} &nbsp;&nbsp;|&nbsp;&nbsp; Jump **{st.session_state.jump}** / {JUMPS_PER_LEVEL}")
+function setup() {
+  createCanvas(windowWidth, 400);
+  player = new Player();
+  generatePlatforms();
+}
 
-# Display placeholder image
-st.image("https://cdn.pixabay.com/photo/2020/04/28/17/40/parkour-5105130_1280.jpg", width=300)
+function draw() {
+  background(224, 247, 250);
+  
+  for (let plat of platforms) {
+    plat.show();
+  }
 
-# Main game logic
-if not st.session_state.won:
-    if st.button("Jump!"):
-        success = random.random() < SUCCESS_RATE
-        if success:
-            if st.session_state.jump < JUMPS_PER_LEVEL:
-                st.session_state.jump += 1
-                st.success("✅ You made the jump!")
-            else:
-                if st.session_state.level < TOTAL_LEVELS:
-                    st.session_state.level += 1
-                    st.session_state.jump = 1
-                    st.balloons()
-                    st.success(f"🎉 Level {st.session_state.level - 1} complete! On to level {st.session_state.level}")
-                else:
-                    st.session_state.won = True
-                    st.balloons()
-        else:
-            st.session_state.deaths += 1
-            st.error("💀 You missed the jump! Try again.")
+  player.update();
+  player.show();
 
-else:
-    st.header("🏁 YOU WIN!")
-    st.success("You've completed all levels of the Parkour Obby!")
-    st.balloons()
+  fill(0);
+  textSize(18);
+  text("Level: " + level + " / 5", 20, 30);
+  text("Jumps: " + jumps + " / 25", 20, 55);
 
-    if st.button("Restart Game"):
-        st.session_state.level = 1
-        st.session_state.jump = 1
-        st.session_state.deaths = 0
-        st.session_state.won = False
+  if (goalReached) {
+    fill(0, 200, 0);
+    textSize(40);
+    textAlign(CENTER);
+    text("🏁 YOU WIN!", width/2, height/2);
+    noLoop();
+  }
+}
 
-# Sidebar stats
-with st.sidebar:
-    st.header("📊 Game Stats")
-    st.metric("Current Level", st.session_state.level)
-    st.metric("Current Jump", st.session_state.jump)
-    st.metric("Total Deaths", st.session_state.deaths)
-    if st.session_state.won:
-        st.success("🏆 Victory Achieved!")
+function keyPressed() {
+  if (key === ' ' || key === 'ArrowUp' || key === 'w') {
+    if (player.onGround()) {
+      player.vel.y = jumpStrength;
+      jumps++;
+      checkLevelProgress();
+    }
+  }
+  if (key === 'ArrowRight' || key === 'd') {
+    player.vel.x = 5;
+  }
+  if (key === 'ArrowLeft' || key === 'a') {
+    player.vel.x = -5;
+  }
+}
+
+function keyReleased() {
+  if (key === 'ArrowRight' || key === 'ArrowLeft' || key === 'a' || key === 'd') {
+    player.vel.x = 0;
+  }
+}
+
+function checkLevelProgress() {
+  if (level < 5 && jumps >= level * 5) {
+    level++;
+    generatePlatforms();
+    player.pos.x = 50;
+    player.pos.y = 50;
+  }
+  if (level === 5 && jumps >= 25) {
+    goalReached = true;
+  }
+}
+
+function generatePlatforms() {
+  platforms = [];
+  for (let i = 0; i < 6; i++) {
+    platforms.push(new Platform(150 * i + 100, random(250, 350), 100, 20));
+  }
+  if (level === 5) {
+    platforms.push(new Platform(900, 200, 100, 20)); // goal platform
+  }
+}
+
+class Player {
+  constructor() {
+    this.pos = createVector(50, 50);
+    this.vel = createVector(0, 0);
+    this.size = 30;
+  }
+
+  update() {
+    this.vel.y += gravity;
+    this.pos.add(this.vel);
+
+    if (this.pos.y + this.size > height) {
+      this.pos.y = height - this.size;
+      this.vel.y = 0;
+    }
+
+    for (let plat of platforms) {
+      if (this.pos.x + this.size > plat.x && this.pos.x < plat.x + plat.w &&
+          this.pos.y + this.size > plat.y && this.pos.y + this.size < plat.y + plat.h &&
+          this.vel.y >= 0) {
+        this.pos.y = plat.y - this.size;
+        this.vel.y = 0;
+      }
+    }
+
+    this.pos.x = constrain(this.pos.x, 0, width - this.size);
+  }
+
+  onGround() {
+    if (this.pos.y + this.size >= height) return true;
+    for (let plat of platforms) {
+      if (this.pos.x + this.size > plat.x && this.pos.x < plat.x + plat.w &&
+          this.pos.y + this.size === plat.y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  show() {
+    fill(255, 100, 100);
+    rect(this.pos.x, this.pos.y, this.size, this.size);
+  }
+}
+
+class Platform {
+  constructor(x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+
+  show() {
+    fill(100, 200, 255);
+    rect(this.x, this.y, this.w, this.h);
+  }
+}
+</script>
+</body>
+</html>
+""", height=450)
+
