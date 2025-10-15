@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 
 st.set_page_config(layout="wide")
 
-st.title("🎮 3D Obby Game (Three.js + Streamlit)")
+st.title("🎮 Obby Game")
 
 st.markdown("Click below to play the game right inside the app!")
 
