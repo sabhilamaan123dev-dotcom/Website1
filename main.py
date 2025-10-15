@@ -1,10 +1,14 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
-st.title("🎮 My 3D Obby Game")
+st.set_page_config(layout="wide")
 
-st.markdown("Click below to play:")
+st.title("🎮 3D Obby Game (Three.js + Streamlit)")
 
-# Link to local or hosted index.html
-game_url = "index.html"  # or http://localhost:8000 if serving
+st.markdown("Click below to play the game right inside the app!")
 
-st.markdown(f"[▶️ Play Obby Game]({game_url})", unsafe_allow_html=True)
+# Load the local HTML file containing the game
+with open("index.html", "r", encoding="utf-8") as f:
+    game_html = f.read()
+
+components.html(game_html, height=650, scrolling=False)
