@@ -169,4 +169,32 @@ class Platform {
 </body>
 </html>
 """, height=450)
+st.title("Another game!")
+components.html("""
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GeoDash Embed</title>
+  <style>
+    body, html {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+    iframe {
+      border: none;
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <iframe
+    src="https://geodash.org/"
+    allowfullscreen
+    sandbox="allow-scripts allow-same-origin"
+  ></iframe>
+</body>
+</html>
+""", height = 600)
 
